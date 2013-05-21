@@ -50,6 +50,10 @@ user { 'tomaszk':
 	
 include postgresql::server
 
+class { 'elasticsearch':
+	version => '0.20.6'
+}
+
 
 Package['libssl0.9.8'] -> Exec['couchbase-download'] -> Package['couchbase-install']
 

@@ -12,6 +12,7 @@ content => "Welcome to your Vagrant-built virtual machine!
 }
 
 $standardSoftware = ['vim', 'openjdk-7-jdk','wget','git']
+
 package { $standardSoftware:
 	ensure => present,
 }
@@ -26,6 +27,17 @@ exec { "couchbase-download":
   path    => ["/usr/bin", "/usr/sbin"]
 }
 
+
+
+$elastic_search_downloaded_deb_file = '/var/tmp/elasticsearch-0.90.0.deb'
+
+exec { 'elasticsearch-download':
+	command => "wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.0.deb",
+	cwd 	=> '/var/tmp',
+	creates => $elastic_search_downloaded_deb_file,
+	path    => ["/usr/bin", "/usr/sbin"]
+}
+
 package { "libssl0.9.8":
 	ensure => present,
 
@@ -36,6 +48,8 @@ package { "couchbase-install":
     ensure => installed,
     source => "/var/tmp/couchbase-server-community_x86_64_2.0.1.deb"
   }
+
+  
 include postgresql::server
 
 user { 'tomaszk':
@@ -50,11 +64,20 @@ user { 'tomaszk':
 	
 include postgresql::server
 
+
+
+
+
 class { 'elasticsearch':
-	version => '0.20.6'
+	pkg_source => $elastic_search_downloaded_deb_file,
+	config => {
+		'node' => {
+			'name' => 'elasticsearch001',
+		},
+	},
 }
 
 
 Package['libssl0.9.8'] -> Exec['couchbase-download'] -> Package['couchbase-install']
-
+Exec['elasticsearch-download'] -> Class['elasticsearch']
 
